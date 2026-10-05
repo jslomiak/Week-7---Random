@@ -1,23 +1,88 @@
-<!doctype html>
-<html lang="en">
-  <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Random Number Generator</title>
-  </head>
-  <body>
-    <button id="generateBtn">Generate Random Number</button>
+<!DOCTYPE html>
+<html lang = "en">
+<meta charset="UTF-8">
+<title>Random/Arrays</title>
+</head>
+<body>
 
-    <p>Your Number: <span id="numberDisplay"></span></p>
+    <button id="button">Play Me!</button>
+    
+    <h2 id= "note-display"></h2>
 
     <script>
-      const button = document.getElementById("generateBtn");
-      const display = document.getElementById("numberDisplay");
+        function playNote(someContext, frequency, duration, attackTime)
+        {
 
-      button.addEventListener("click", function () {
-        const randomNumber = Math.floor(Math.random() * 100) + 1;
-        display.textContent = randomNumber;
-      });
+            if (someContext.state === 'suspended') {
+                someContext.resume();
+            }
+
+            const osc1 = new OscillatorNode(someContext);
+            const osc2 = new OscillatorNode(someContext);
+            const osc3 = new OscillatorNode(someContext);
+            const gain = new GainNode(someContext);
+        
+            
+            osc1.frequency.value = frequency;
+            osc2.frequency.value = frequency*2.01;
+            osc3.frequency.value = frequency*3.02;
+            osc1.type = "sawtooth"
+            osc2.type = "sawtooth"
+            osc3.type = "sawtooth"
+            gain.gain.value = 0;
+
+            osc1.connect(gain).connect(someContext.destination);
+            osc2.connect(gain).connect(someContext.destination);
+            osc3.connect(gain).connect(someContext.destination);
+
+            let now = someContext.currentTime;
+
+            gain.gain.setValueAtTime(0.001, now);
+            gain.gain.exponentialRampToValueAtTime(0.30, now + attackTime); //attack
+            gain.gain.exponentialRampToValueAtTime(0.10, now + 0.01 + 0.2); // decay
+            gain.gain.exponentialRampToValueAtTime(0.05, now + 0.01 + 0.2 + 0.2); //sustain
+            gain.gain.exponentialRampToValueAtTime(0.001, now + duration); //release
+
+            osc1.start();
+            osc1.stop(now + duration);
+
+            osc2.start();
+            osc2.stop(now + duration);
+
+            osc3.start();
+            osc3.stop(now + duration);
+
+        }
+
+        const midiPitches = [69, 71, 73, 75, 76, 78, 80, 81]
+
+        const noteNames = {69: "A4", 71: "B4", 73: "C#5", 75: "D#5", 76: "E5", 78: "F#5", 80: "G#5", 81: "A5"};
+
+        const randomPitchData = function() {
+            let randomMidiNote = midiPitches[Math.floor(Math.random() * midiPitches.length)];
+
+            let newFreq = 440 * (2 ** ((randomMidiNote - 69) / 12));
+
+            return {
+            frequency: newFreq,
+            name: noteNames[randomMidiNote]
+        }
+    }
+
+        const myCtx = new AudioContext();
+
+        document.querySelector("#button").onclick = () => {
+            const noteData = randomPitchData();
+
+        document.querySelector("#note-display").textContent = `Playing Note: ${noteData.name}`;
+
+        playNote(myCtx, noteData.frequency, 2, 0.25);
+
+        };
+
+        
     </script>
-  </body>
+    
+</body>
+
 </html>
